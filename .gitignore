@@ -210,8 +210,9 @@ __marimo__/
 raw_data/
 data/
 
-# Trained model checkpoints (reproducible by running training notebooks)
+# Trained model checkpoints (reproducible by running training)
 *.pt
+checkpoints/
 
 # Claude
 .claude
