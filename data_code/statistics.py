@@ -68,6 +68,18 @@ def compute_statistics(data_dir="data"):
     stats["sample_rate_hz"]   = 100
     stats["trace_duration_s"] = int(X.shape[1]) // 100
 
+    # ── Spectrogram dB range (global colormap anchor) ────────────────────────
+    spec_path = data_dir / "spectrograms" / "spectrograms_10x10.npy"
+    if spec_path.exists():
+        X_spec = np.load(spec_path)
+        flat   = X_spec.ravel()
+        stats["spectrogram_db_range"] = {
+            "p2":  round(float(np.percentile(flat,  2)), 2),
+            "p98": round(float(np.percentile(flat, 98)), 2),
+            "min": round(float(flat.min()), 2),
+            "max": round(float(flat.max()), 2),
+        }
+
     # ── Save ─────────────────────────────────────────────────────────────────
     out_path = data_dir / "statistics.json"
     with open(out_path, "w") as f:
@@ -87,6 +99,10 @@ def compute_statistics(data_dir="data"):
         if v:
             print(f"  {key:15s}  mean={v['mean']:.2f}  std={v['std']:.2f}"
                   f"  [{v['min']:.2f}, {v['max']:.2f}]")
+    if "spectrogram_db_range" in stats:
+        r = stats["spectrogram_db_range"]
+        print(f"  spectrogram dB    p2={r['p2']:.1f}  p98={r['p98']:.1f}"
+              f"  [{r['min']:.1f}, {r['max']:.1f}]")
 
     return stats
 
