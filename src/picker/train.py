@@ -1,5 +1,7 @@
 """Training loop for the P-wave arrival regression CNN."""
 
+import os
+
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
@@ -40,6 +42,8 @@ def train(config: dict = None) -> dict:
 
     device = cfg["device"]
     print(f"Using device: {device}")
+
+    os.makedirs(os.path.dirname(cfg["checkpoint_path"]) or ".", exist_ok=True)
 
     # Dataset init reads ~2.8 GB of earthquake waveforms into RAM once
     print("Loading datasets into RAM...")
