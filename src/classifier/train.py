@@ -47,7 +47,7 @@ def _load_data(data_dir: str, batch_size: int, device: str):
     return make_loader("train", shuffle=True), make_loader("val"), make_loader("test")
 
 
-def train() -> dict:
+def train(data_dir: str = "data", checkpoint_path: str = "checkpoints/classifier_best.pt") -> dict:
     """Train the CNN classifier and save the best checkpoint by validation F1.
 
     Args:
@@ -64,8 +64,8 @@ def train() -> dict:
         history dict with keys "train_loss", "val_loss", "val_f1".
     """
     cfg = {
-        "data_dir": "data",
-        "checkpoint_path": "checkpoints/classifier_best.pt",
+        "data_dir": data_dir,
+        "checkpoint_path": checkpoint_path,
         "batch_size": 256,
         "epochs": 30,
         "lr": 1e-3,
@@ -83,6 +83,11 @@ def train() -> dict:
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
         optimizer, mode="min", patience=3, factor=0.5
     )
+
+    from sklearn.metrics import f1_score
+    import os
+
+    os.makedirs(os.path.dirname(cfg["checkpoint_path"]) or ".", exist_ok=True)
 
     history = {"train_loss": [], "val_loss": [], "val_f1": []}
     best_val_f1 = 0.0
@@ -115,21 +120,34 @@ def train() -> dict:
                     val_true.append(y_batch.cpu().numpy())
             val_loss /= len(val_loader.dataset)
 
-            from sklearn.metrics import f1_score
             val_probs = np.concatenate(val_probs)
             val_true = np.concatenate(val_true)
+            val_f1 = f1_score(val_true, (val_probs >= 0.5).astype(int), zero_division=0)
 
             history["train_loss"].append(train_loss)
             history["val_loss"].append(val_loss)
+            history["val_f1"].append(val_f1)
 
             # Halve LR when val_loss plateaus for 3 epochs
             scheduler.step(val_loss)
+
+            if val_f1 > best_val_f1:
+                best_val_f1 = val_f1
+                patience_counter = 0
+                torch.save(model.state_dict(), cfg["checkpoint_path"])
+            else:
+                patience_counter += 1
 
             print(
                 f"Epoch {epoch:2d}/{cfg['epochs']}  "
                 f"train_loss={train_loss:.4f}  "
                 f"val_loss={val_loss:.4f}  "
+                f"val_f1={val_f1:.4f}"
             )
+
+            if patience_counter >= cfg["patience"]:
+                print(f"Early stopping at epoch {epoch}.")
+                break
 
     except KeyboardInterrupt:
         print(f"\nTraining interrupted at epoch {epoch}.")
