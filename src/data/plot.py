@@ -72,32 +72,10 @@ def plot_spectrogram(trace_id, data_dir="data", ax=None):
                          cmap="inferno", vmin=vmin, vmax=vmax)
     plt.colorbar(mesh, ax=ax, label="Power (dB)")
 
-    for col, label, color in [
-        ("p_arrival_sample", "P", "cyan"),
-        ("s_arrival_sample", "S", "lime"),
-    ]:
-        val = row.get(col)
-        if val is not None and pd.notna(val):
-            ax.axvline(float(val) / FS, color=color, lw=1.5,
-                       linestyle="--", label=label)
-
-    kind  = "Earthquake" if row["label"] == 1 else "Noise"
-    parts = [f"{kind}  [{trace_id}]"]
-    for key, fmt in [
-        ("source_magnitude",   "mag {}"),
-        ("source_distance_km", "dist {} km"),
-        ("source_depth_km",    "depth {} km"),
-    ]:
-        v = row.get(key)
-        if v is not None and pd.notna(v):
-            parts.append(fmt.format(v))
-    parts.append(f"split: {row.get('split', '?')}")
-
-    ax.set_title("  ".join(parts))
+    kind = "Earthquake" if row["label"] == 1 else "Noise"
+    ax.set_title(f"Spectrogram of {kind}")
     ax.set_xlabel("Time (s)")
     ax.set_ylabel("Frequency (Hz)")
-    if ax.get_legend_handles_labels()[0]:
-        ax.legend(loc="upper right")
 
     if standalone:
         plt.tight_layout()
