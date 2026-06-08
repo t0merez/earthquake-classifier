@@ -207,8 +207,8 @@ marimo/_lsp/
 __marimo__/
 
 # STEAD raw data and processed outputs
-raw_data/
-data/
+/raw_data/
+/data/
 
 # Trained model checkpoints (reproducible by running training)
 *.pt
